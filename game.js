@@ -54,9 +54,13 @@ class Actor {
     if (this === test) {
       return false;
     }
+    // эту проверку можно убрать
     if ((test.size.x < 0) || (test.size.y < 0)) {
       return false;
     }
+    // условие можно упростить
+    // если переданный объект выше, ниже, левее или правее,
+    // то он не пересекается с данным
     const res = (this.left <= test.left) && (test.left < this.right) || (this.left < test.right) && (test.right <= this.right);
     return (this.top <= test.top) && (test.top < this.bottom) && res || (this.top < test.bottom) && (test.bottom <= this.bottom) && res;
   }
@@ -67,18 +71,23 @@ class Level {
   constructor(grid = [], actors = []) {
     this.grid = grid;
     this.actors = actors;
+    // тут нужно использовать метод для поиска объектов в массиве
     for (let i = 0; i < actors.length; i++) {
+      // всегда используйте === или !==
       if (actors[i].type == 'player') {
         this.player = actors[i];
         break;
       }
     }
+    // ===
+    // вообще эта праверка тут лишняя
     if (grid.length == 0) {
       this.height = 0;
     } else {
       this.height = grid.length;
     }
     this.width = 0;
+    // здесь лучше использовать reduce или map + Math.max
     for (let i = 0; i < grid.length; i++) {
       if (grid[i] instanceof Array) {
         if (grid[i].length > this.width) {
@@ -91,6 +100,7 @@ class Level {
   }
 
   isFinished() {
+    // !==
     return (this.status != null) && (this.finishDelay < 0);
   }
 
@@ -98,11 +108,13 @@ class Level {
     if (!(actor instanceof Actor)) {
       throw new Error('передан неправильный агрумент, нужен Actor');
     }
+    // лучше использовать метод для поиска объекта в массиве
     for (let i = 0; i < this.actors.length; i++) {
       if (actor.isIntersect(this.actors[i])) {
         return this.actors[i];
       }
     }
+    // лишняя строчка
     return undefined;
   }
 
@@ -116,8 +128,15 @@ class Level {
     if ((pos.y < 0) || ((pos.x + size.x) > this.width) || (pos.x < 0)) {
       return 'wall';
     }
+    // лучше записать округлённые значения,
+    // чтобы  не округлять на каждой итерации
     for (let x = Math.floor(pos.x); x < Math.ceil(pos.x + size.x); x++) {
       for (let y = Math.floor(pos.y); y < Math.ceil(pos.y + size.y); y++) {
+        // тут нужно просто проверить, что ячейка не пустая,
+        // иначе придётся исправлять код в нескольких местах,
+        // если появится новое препятствие
+        // this.grid[y][x] лучше записать в переменную,
+        // чтобы неискольо раз не писать
         if ((this.grid[y][x] == 'lava') || (this.grid[y][x] == 'wall')) {
           return this.grid[y][x];
         }
@@ -128,6 +147,7 @@ class Level {
 
   removeActor(actor) {
     for (let i = 0; i < this.actors.length; i++) {
+      // ===
       if (actor == this.actors[i]) {
         this.actors.splice(i, 1);
         break;
@@ -137,6 +157,7 @@ class Level {
 
   noMoreActors(type) {
     for (let i = 0; i < this.actors.length; i++) {
+      // ===
       if (this.actors[i].type == type) {
         return false;
       }
@@ -145,8 +166,11 @@ class Level {
   }
 
   playerTouched(type, actor) {
+    // ===
+    // скобки вокруг условий можно опустить
     if ((type == 'lava') || (type == 'fireball')) {
       this.status = 'lost';  
+    // статус тут проверять не нужно
     } else if ((type == 'coin') && (this.status != 'lost')) {
       this.removeActor(actor);
       if (this.noMoreActors('coin')) {
@@ -163,6 +187,7 @@ class LevelParser {
   }
 
   actorFromSymbol(sym) {
+    // это лишняя проверка
     if (typeof sym === 'undefined') {
       return undefined;
     }
@@ -170,6 +195,7 @@ class LevelParser {
   }
 
   obstacleFromSymbol(sym) {
+    // это лишняя проверка
     if (typeof sym === 'undefined') {
       return undefined;
     }
@@ -179,13 +205,16 @@ class LevelParser {
     if (sym == '!') {
       return 'lava';
     }
+    // лишняя строчка
     return undefined;
   }
 
   createGrid(grid) {
+    // этот метод лучше переписать использую метод map
     for (let i = 0; i < grid.length; i++) {
       grid[i] = grid[i].split('');
       for (let j = 0; j < grid[i].length; j++) {
+        // дублирование логики obstacleFromSymbol
         if (grid[i][j] == 'x') {
           grid[i][j] = 'wall';
         } else if (grid[i][j] == '!') {
@@ -199,15 +228,22 @@ class LevelParser {
   }
 
   createActors(actors) {
+    // const
     var arr = [];
+    // лучше добавить значение по-умолчанию в конструкторе
+    // и не проверять это поле каждый раз перед использованием
     if (typeof this.dictionary === 'undefined') {
       return arr;
     }
     for (let y = 0; y < actors.length; y++) {
       for (let x = 0; x < actors[y].length; x++) {
+        // const
         let pos = new Vector(x, y);
+        // лишняя проверка
         if (actors[y][x] in this.dictionary) {
+          // дублирование логики actorFromSymbol
           if (typeof this.dictionary[actors[y][x]] === 'function') {
+            // const
             let item = new this.dictionary[actors[y][x]](pos);
             if (item instanceof Actor) {
               arr.push(item);
@@ -220,6 +256,7 @@ class LevelParser {
   }
 
   parse(grid) {
+    // зачем?
     let actors = grid.slice();
     grid = this.createGrid(grid);
     actors = this.createActors(actors);
@@ -237,10 +274,12 @@ class Fireball extends Actor {
   }
 
   getNextPosition(t = 1) {
+    // тут нужно использовать методы класса Vector
     return new Vector(this.pos.x + t * this.speed.x, this.pos.y + t * this.speed.y);
   }
 
   handleObstacle() {
+    // тут нужно использовать метод класса Vector
     this.speed.x = -this.speed.x;
     this.speed.y = -this.speed.y;
   }
@@ -250,6 +289,8 @@ class Fireball extends Actor {
     if (level.obstacleAt(next, this.size)) {
       this.handleObstacle();
     } else {
+      // не нужно мутировать объекты класса Vector
+      // (менять свойства без создания новго объекта)
       this.pos.x = next.x;
       this.pos.y = next.y;
     }
@@ -314,6 +355,7 @@ class Coin extends Actor {
 
 class Player extends Actor {
   constructor(pos = new Vector(0, 0)) {
+    // Тут можно вызвать pos.plus
     super(new Vector(pos.x + 0, pos.y - 0.5), new Vector(0.8, 1.5));
   }
   
