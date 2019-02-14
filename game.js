@@ -104,14 +104,13 @@ class Level {
     }
 	const x0 = Math.floor(pos.x), xn = Math.ceil(pos.x + size.x), y0 = Math.floor(pos.y), yn = Math.ceil(pos.y + size.y);
     for (let x = x0; x < xn; x++) {
-      for (let y = y0; y < yn; y++) {
-		let cell = this.grid[y][x]; 
-        if (cell !== 'undefined'){
+      for (let y = y0; y < yn; y++) {		  
+		let cell = this.grid[y][x]; 		
+        if (cell){
           return cell;
         }
       }
     }
-    return undefined;
   }
 
   removeActor(actor) {
@@ -135,7 +134,8 @@ class Level {
   playerTouched(type, actor) {
     if (type === 'lava' || type === 'fireball') {
       this.status = 'lost';  
-    } else if (type === 'coin') {
+	  // без проверки статуса получается что можно собирать монеты при lost
+    } else if ((type === 'coin') && (this.status != 'lost')) {
       this.removeActor(actor);
       if (this.noMoreActors('coin')) {
         this.status = 'won';
