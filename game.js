@@ -54,6 +54,7 @@ class Actor {
     if (this === test) {
       return false;
     }
+    // форматирование
 	return this.left < test.right && this.right > test.left && this.bottom > test.top && this.top < test.bottom;
   }
 }
@@ -70,7 +71,9 @@ class Level {
 	const grlen = grid.map(function (el) {
 		return el.length;
 	});
+	// Проверку можно убрать, если добавить 0 в список аргументов Math.max
 	if (grlen.length > 0) {
+	  // Можно обойтись без apply, если использовать оператор spread
 		this.width = Math.max.apply(null, grlen);
 	} else {
 		this.width = 0;
@@ -87,6 +90,7 @@ class Level {
     if (!(actor instanceof Actor)) {
       throw new Error('передан неправильный агрумент, нужен Actor');
     }
+    // стрелочная функция короче, форматирование
 	return this.actors.find(function (el) {
 		return actor.isIntersect(el);
 	});
@@ -102,10 +106,13 @@ class Level {
     if ((pos.y < 0) || ((pos.x + size.x) > this.width) || (pos.x < 0)) {
       return 'wall';
     }
+    // не объявляйте переменные через запятую (см. первую лекцию)
+    // форматирование
 	const x0 = Math.floor(pos.x), xn = Math.ceil(pos.x + size.x), y0 = Math.floor(pos.y), yn = Math.ceil(pos.y + size.y);
     for (let x = x0; x < xn; x++) {
-      for (let y = y0; y < yn; y++) {		  
-		let cell = this.grid[y][x]; 		
+      for (let y = y0; y < yn; y++) {
+        // const, форматирование
+		let cell = this.grid[y][x];
         if (cell){
           return cell;
         }
@@ -123,6 +130,7 @@ class Level {
   }
 
   noMoreActors(type) {
+    // тут лучше использовать метод some
     for (let i = 0; i < this.actors.length; i++) {
       if (this.actors[i].type === type) {
         return false;
@@ -133,8 +141,12 @@ class Level {
 
   playerTouched(type, actor) {
     if (type === 'lava' || type === 'fireball') {
-      this.status = 'lost';  
+      this.status = 'lost';
 	  // без проверки статуса получается что можно собирать монеты при lost
+    // проверку статуса нужно вынести в начало метода,
+    // если он не равен null, то выполнение функции нужно прератить
+    // (сейчас можно не только собрать монетку после столкновения с ловой,
+    // но и столкнуться с лавой после того, как собрал все монеты)
     } else if ((type === 'coin') && (this.status != 'lost')) {
       this.removeActor(actor);
       if (this.noMoreActors('coin')) {
@@ -164,12 +176,14 @@ class LevelParser {
   }
 
   createGrid(grid) {
+    // стрелочные функции, форматирование
 	const level = this;
 	grid = grid.map(function (y){
+	  // аргументы функции лучше не менять
 		y = y.split('');
 		y = y.map(function (x){
-			x = level.obstacleFromSymbol(x);	
-			return x;			
+			x = level.obstacleFromSymbol(x);
+			return x;
 		});
 		return y;
 	});
@@ -178,15 +192,16 @@ class LevelParser {
 
   createActors(actors) {
     const arr = [];
+    // форматирование
     for (let y = 0; y < actors.length; y++) {
-      for (let x = 0; x < actors[y].length; x++) {       
+      for (let x = 0; x < actors[y].length; x++) {
 		const newActor = this.actorFromSymbol(actors[y][x]);
 		if (typeof newActor === 'function'){
 			const item = new newActor(new Vector(x, y));
 			if (item instanceof Actor) {
               arr.push(item);
             }
-		}			
+		}
       }
     }
     return arr;
@@ -250,7 +265,9 @@ class FireRain extends Fireball {
 
 
 class Coin extends Actor {
+  // странное значение по умолчанию
   constructor(pos = new Vector(1, 1)) {
+    // .plus
     super(new Vector(pos.x + 0.2, pos.y + 0.1), new Vector(0.6, 0.6));
     this.startPos = this.pos;
     this.springSpeed = 8;
@@ -267,6 +284,7 @@ class Coin extends Actor {
   }
 
   getSpringVector() {
+    // ;;
     return new Vector(0, Math.sin(this.spring) * this.springDist);;
   }
 
@@ -284,7 +302,7 @@ class Player extends Actor {
   constructor(pos = new Vector(0, 0)) {
     super(pos.plus(new Vector(0, -0.5)), new Vector(0.8, 1.5));
   }
-  
+
   get type() {
     return 'player';
   }
