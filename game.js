@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 class Vector {
   constructor(x = 0, y = 0) {
@@ -8,9 +8,9 @@ class Vector {
 
   plus(vector) {
     if (!(vector instanceof Vector)) {
-      throw new Error('передан неправильный агрумент, нужен вектор');
+      throw new Error("передан неправильный агрумент, нужен вектор");
     }
-    return new Vector(this.x + vector.x, this.y + vector.y);;
+    return new Vector(this.x + vector.x, this.y + vector.y);
   }
 
   times(multiplier) {
@@ -18,103 +18,103 @@ class Vector {
   }
 }
 
-
 class Actor {
-  constructor(pos = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
-    if (!((pos instanceof Vector) && (size instanceof Vector) && (speed instanceof Vector))) {
-      throw new Error('передан неправильный агрумент, нужен вектор');
+  constructor(
+    pos = new Vector(0, 0),
+    size = new Vector(1, 1),
+    speed = new Vector(0, 0)
+  ) {
+    if (
+      !(
+        pos instanceof Vector &&
+        size instanceof Vector &&
+        speed instanceof Vector
+      )
+    ) {
+      throw new Error("передан неправильный агрумент, нужен вектор");
     }
     this.pos = pos;
     this.size = size;
     this.speed = speed;
   }
-  
-  get left(){
-	return this.pos.x;  
+
+  get left() {
+    return this.pos.x;
   }
-  get top(){
-	return this.pos.y;  
+  get top() {
+    return this.pos.y;
   }
-  get right(){
+  get right() {
     return this.pos.x + this.size.x;
   }
-  get bottom(){
+  get bottom() {
     return this.pos.y + this.size.y;
   }
   get type() {
-    return 'actor';
+    return "actor";
   }
 
   act() {}
 
   isIntersect(test) {
     if (!(test instanceof Actor)) {
-      throw new Error('передан неправильный агрумент, нужен Actor');
+      throw new Error("передан неправильный агрумент, нужен Actor");
     }
     if (this === test) {
       return false;
     }
-    // форматирование
-	return this.left < test.right && this.right > test.left && this.bottom > test.top && this.top < test.bottom;
+	
+    return (
+      this.left < test.right &&
+      this.right > test.left &&
+      this.bottom > test.top &&
+      this.top < test.bottom
+    );
   }
 }
-
 
 class Level {
   constructor(grid = [], actors = []) {
     this.grid = grid;
     this.actors = actors;
-    this.player = actors.find(function (el) {
-		return el.type === 'player';
-	});
+    this.player = actors.find(el => el.type === "player");
     this.height = grid.length;
-	const grlen = grid.map(function (el) {
-		return el.length;
-	});
-	// Проверку можно убрать, если добавить 0 в список аргументов Math.max
-	if (grlen.length > 0) {
-	  // Можно обойтись без apply, если использовать оператор spread
-		this.width = Math.max.apply(null, grlen);
-	} else {
-		this.width = 0;
-	}
+    const grlen = grid.map(el => el.length);
+    this.width = Math.max(...grlen, 0);
     this.status = null;
     this.finishDelay = 1;
   }
 
   isFinished() {
-    return (this.status !== null) && (this.finishDelay < 0);
+    return this.status !== null && this.finishDelay < 0;
   }
 
   actorAt(actor) {
     if (!(actor instanceof Actor)) {
-      throw new Error('передан неправильный агрумент, нужен Actor');
+      throw new Error("передан неправильный агрумент, нужен Actor");
     }
-    // стрелочная функция короче, форматирование
-	return this.actors.find(function (el) {
-		return actor.isIntersect(el);
-	});
+    return this.actors.find(el => actor.isIntersect(el));
   }
 
   obstacleAt(pos, size) {
-    if (!((pos instanceof Vector) && (size instanceof Vector))) {
-      throw new Error('передан неправильный агрумент, нужен вектор');
+    if (!(pos instanceof Vector && size instanceof Vector)) {
+      throw new Error("передан неправильный агрумент, нужен вектор");
     }
-    if ((pos.y + size.y) > this.height) {
-      return 'lava';
+    if (pos.y + size.y > this.height) {
+      return "lava";
     }
-    if ((pos.y < 0) || ((pos.x + size.x) > this.width) || (pos.x < 0)) {
-      return 'wall';
+    if (pos.y < 0 || pos.x + size.x > this.width || pos.x < 0) {
+      return "wall";
     }
-    // не объявляйте переменные через запятую (см. первую лекцию)
-    // форматирование
-	const x0 = Math.floor(pos.x), xn = Math.ceil(pos.x + size.x), y0 = Math.floor(pos.y), yn = Math.ceil(pos.y + size.y);
+	
+    const x0 = Math.floor(pos.x);
+    const xn = Math.ceil(pos.x + size.x);
+    const y0 = Math.floor(pos.y);
+    const yn = Math.ceil(pos.y + size.y);
     for (let x = x0; x < xn; x++) {
       for (let y = y0; y < yn; y++) {
-        // const, форматирование
-		let cell = this.grid[y][x];
-        if (cell){
-          return cell;
+        if (this.grid[y][x]) {
+          return this.grid[y][x];
         }
       }
     }
@@ -130,32 +130,25 @@ class Level {
   }
 
   noMoreActors(type) {
-    // тут лучше использовать метод some
-    for (let i = 0; i < this.actors.length; i++) {
-      if (this.actors[i].type === type) {
-        return false;
-      }
+    function testType(test) {
+      return test.type === type;
     }
-    return true;
+    return !this.actors.some(testType);
   }
 
   playerTouched(type, actor) {
-    if (type === 'lava' || type === 'fireball') {
-      this.status = 'lost';
-	  // без проверки статуса получается что можно собирать монеты при lost
-    // проверку статуса нужно вынести в начало метода,
-    // если он не равен null, то выполнение функции нужно прератить
-    // (сейчас можно не только собрать монетку после столкновения с ловой,
-    // но и столкнуться с лавой после того, как собрал все монеты)
-    } else if ((type === 'coin') && (this.status != 'lost')) {
-      this.removeActor(actor);
-      if (this.noMoreActors('coin')) {
-        this.status = 'won';
+    if (this.status === null) {
+      if (type === "lava" || type === "fireball") {
+        this.status = "lost";
+      } else if (type === "coin") {
+        this.removeActor(actor);
+        if (this.noMoreActors("coin")) {
+          this.status = "won";
+        }
       }
     }
   }
 }
-
 
 class LevelParser {
   constructor(dictionary = {}) {
@@ -167,41 +160,30 @@ class LevelParser {
   }
 
   obstacleFromSymbol(sym) {
-    if (sym == 'x') {
-      return 'wall';
+    if (sym == "x") {
+      return "wall";
     }
-    if (sym == '!') {
-      return 'lava';
+    if (sym == "!") {
+      return "lava";
     }
   }
 
   createGrid(grid) {
-    // стрелочные функции, форматирование
-	const level = this;
-	grid = grid.map(function (y){
-	  // аргументы функции лучше не менять
-		y = y.split('');
-		y = y.map(function (x){
-			x = level.obstacleFromSymbol(x);
-			return x;
-		});
-		return y;
-	});
+    grid = grid.map(y => y.split("").map(x => this.obstacleFromSymbol(x)));
     return grid;
   }
 
   createActors(actors) {
     const arr = [];
-    // форматирование
     for (let y = 0; y < actors.length; y++) {
       for (let x = 0; x < actors[y].length; x++) {
-		const newActor = this.actorFromSymbol(actors[y][x]);
-		if (typeof newActor === 'function'){
-			const item = new newActor(new Vector(x, y));
-			if (item instanceof Actor) {
-              arr.push(item);
-            }
-		}
+        const newActor = this.actorFromSymbol(actors[y][x]);
+        if (typeof newActor === "function") {
+          const item = new newActor(new Vector(x, y));
+          if (item instanceof Actor) {
+            arr.push(item);
+          }
+        }
       }
     }
     return arr;
@@ -212,13 +194,12 @@ class LevelParser {
   }
 }
 
-
 class Fireball extends Actor {
   constructor(pos, speed) {
     super(pos, new Vector(1, 1), speed);
   }
   get type() {
-    return 'fireball';
+    return "fireball";
   }
 
   getNextPosition(t = 1) {
@@ -238,7 +219,6 @@ class Fireball extends Actor {
     }
   }
 }
-
 
 class HorizontalFireball extends Fireball {
   constructor(pos) {
@@ -263,12 +243,9 @@ class FireRain extends Fireball {
   }
 }
 
-
 class Coin extends Actor {
-  // странное значение по умолчанию
-  constructor(pos = new Vector(1, 1)) {
-    // .plus
-    super(new Vector(pos.x + 0.2, pos.y + 0.1), new Vector(0.6, 0.6));
+  constructor(pos = new Vector(0, 0)) {
+    super(pos.plus(new Vector(0.2, 0.1)), new Vector(0.6, 0.6));
     this.startPos = this.pos;
     this.springSpeed = 8;
     this.springDist = 0.07;
@@ -276,7 +253,7 @@ class Coin extends Actor {
   }
 
   get type() {
-    return 'coin';
+    return "coin";
   }
 
   updateSpring(t = 1) {
@@ -284,8 +261,7 @@ class Coin extends Actor {
   }
 
   getSpringVector() {
-    // ;;
-    return new Vector(0, Math.sin(this.spring) * this.springDist);;
+    return new Vector(0, Math.sin(this.spring) * this.springDist);
   }
 
   getNextPosition(t = 1) {
@@ -304,44 +280,42 @@ class Player extends Actor {
   }
 
   get type() {
-    return 'player';
+    return "player";
   }
 }
 
-
 const actorDict = {
-  '@': Player,
-  'o': Coin,
-  '=': HorizontalFireball,
-  '|': VerticalFireball,
-  'v': FireRain
-}
-
+  "@": Player,
+  o: Coin,
+  "=": HorizontalFireball,
+  "|": VerticalFireball,
+  v: FireRain
+};
 
 const schemas = [
   [
-    '         ',
-    '         ',
-    '    =    ',
-    '       o ',
-    '     !xxx',
-    ' @       ',
-    'xxx!     ',
-    '         '
+    "         ",
+    "         ",
+    "    =    ",
+    "       o ",
+    "     !xxx",
+    " @       ",
+    "xxx!     ",
+    "         "
   ],
   [
-    '      v  ',
-    '    v    ',
-    '  v      ',
-    '        o',
-    '        x',
-    '@   x    ',
-    'x        ',
-    '         '
+    "      v  ",
+    "    v    ",
+    "  v      ",
+    "        o",
+    "        x",
+    "@   x    ",
+    "x        ",
+    "         "
   ]
 ];
 
-
 const parser = new LevelParser(actorDict);
-runGame(schemas, parser, DOMDisplay)
-  .then(() => console.log('Вы выиграли приз!'));
+runGame(schemas, parser, DOMDisplay).then(() =>
+  console.log("Вы выиграли приз!")
+);
